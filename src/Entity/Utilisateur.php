@@ -10,16 +10,17 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 #[ApiResource()]
 class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
     #[Groups(['document:read', 'commentaire:read'])]
-    private ?int $id = null;
+    #[ORM\Column(unique: true, type: 'string', length: 36, nullable: false)]
+    private ?string $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['document:read', 'commentaire:read'])]
@@ -44,17 +45,20 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-  
+
 
     #[ORM\Column(nullable: true)]
     private ?bool $abonnee = null;
 
+
+
     public function __construct()
     {
-     
+        $this->id = Uuid::v4()->toRfc4122();
     }
 
-    public function getId(): ?int
+
+    public function getId(): ?string
     {
         return $this->id;
     }
@@ -131,9 +135,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
 
-    public function eraseCredentials(): void
-    {
-    }
+    public function eraseCredentials(): void {}
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
@@ -159,7 +161,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-   
+
 
     public function isAbonnee(): ?bool
     {
