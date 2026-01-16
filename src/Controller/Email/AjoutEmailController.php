@@ -42,8 +42,8 @@ class AjoutEmailController extends AbstractController
             ]);
         }
 
-        $verifMail = $entityManager->getRepository(Emails::class)->findBy(["email"=>$email]);
-        if(!empty($verifMail))
+        $verifMailExiste = $entityManager->getRepository(Emails::class)->findBy(["email"=>$email, "confirmee"=>true]);
+        if(!empty($verifMailExiste))
         {
            return new JsonResponse([
                 "code" => 305,
@@ -51,21 +51,33 @@ class AjoutEmailController extends AbstractController
             ]); 
         }
 
-        $mail = new Emails();
-        $mail->setEmail($email);
-        $entityManager->persist($mail);
-        $entityManager->flush();
+        $verifMailConfirmee = $entityManager->getRepository(Emails::class)->findBy(["email"=>$email]);
+        if(empty($verifMailConfirmee))
+        {
+            $mail = new Emails();
+            $mail->setEmail($email);
+            $mail->setConfirmee(false);
+            $entityManager->persist($mail);
+            $entityManager->flush();
 
-        $confirmationUrl = "https://back.baiboly.antonionavira.mg/api/email/confirmation/".$mail->getId();
+            $confirmationUrl = "https://back.baiboly.antonionavira.mg/api/email/confirmation/".$mail->getId();
 
-        $this->confirmEmail->send(
-                toEmail: $mail->getEmail(),
+            $this->confirmEmail->send(
+                    toEmail: $mail->getEmail(),
+                    confirmation_url: $confirmationUrl,
+                );
+        }else{
+            $mail = $entityManager->getRepository(Emails::class)->findOneBy(["email"=>$email]);
+            $confirmationUrl = "https://back.baiboly.antonionavira.mg/api/email/confirmation/".$mail->getId();
+
+            $this->confirmEmail->send(
+                toEmail: $email,
                 confirmation_url: $confirmationUrl,
-            );
-
+            ); 
+        }
         return new JsonResponse([
             "code" => 200,
-            "message" => $email." a été enregistré avec success"
+            "message" => "Une mail de confirmation a été envoyé à ".$email.". Veuillez accepter cet email."
         ]);
     }
 }
