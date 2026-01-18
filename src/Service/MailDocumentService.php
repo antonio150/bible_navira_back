@@ -16,7 +16,8 @@ class MailDocumentService
 
     public function send(
         ?string $toEmail,
-        string $veset,
+        string $startVerse,
+        string $endVerse,
         string $contenu,
         string $unsubscribe_url,
         string $book,
@@ -44,7 +45,8 @@ class MailDocumentService
         $email->context([
             'image_url' => 'cid:logo_navira',
             'contenu' => $contenu,
-            'veset' => $veset,
+            'startVerse' => $startVerse,
+            'endVerse' => $endVerse,
             'book' => $book,
             'chapter' => $chapter,
             'unsubscribe_url' => $unsubscribe_url

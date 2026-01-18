@@ -33,11 +33,12 @@ class SendDailyVerseCommand extends Command
 
        
         // 2️⃣ Récupérer le verset du jour
-        $verse = $this->bibleVerseService->getVerseOfTheDay();
+        $verse = $this->bibleVerseService->getVersesOfTheDay();
 
         $book = $verse['book'];
         $chapter = $verse['chapter'];
-        $veset = $verse['verse'];
+        $startVerse = $verse['startVerse'];
+        $endVerse = $verse['endVerse'];
         $contenu = $verse['text'];
 
      
@@ -47,7 +48,8 @@ class SendDailyVerseCommand extends Command
             try{
             $this->mailDocumentService->send(
                 toEmail: $email->getEmail(),
-                veset: $veset,
+                startVerse: $startVerse,
+                endVerse: $endVerse,
                 contenu: $contenu,
                 unsubscribe_url: $unsubscribeUrl,
                 book: $book,

@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Service;
 
 class BibleVerseService
 {
-    public function getVerseOfTheDay(): array
+    public function getVersesOfTheDay(int $perDay = 5): array
     {
         $books = [
             'genesisy.json',
@@ -51,52 +50,74 @@ class BibleVerseService
         $projectDir = dirname(__DIR__, 2);
         $basePath = $projectDir . '/src/baiboly-json/Testameta taloha/';
 
-        // Date de départ (change si tu veux)
         $start = new \DateTime('2026-01-01');
         $today = new \DateTime('today');
-
         $days = $start->diff($today)->days;
 
-        foreach ($books as $book) {
+        foreach ($books as $bookFile) {
 
-            $json = file_get_contents($basePath . $book);
+            $json = file_get_contents($basePath . $bookFile);
             $data = json_decode($json, true);
 
-            // compter tous les versets du livre
-            $count = 0;
+            // Total versets dans le livre
+            $totalVerses = 0;
             foreach ($data as $chapter) {
-                $count += count($chapter);
+                $totalVerses += count($chapter);
             }
 
-            // encore trop de jours → passer au livre suivant
-            if ($days >= $count) {
-                $days -= $count;
+            $blocks = (int) ceil($totalVerses / $perDay);
+
+            if ($days >= $blocks) {
+                $days -= $blocks;
                 continue;
             }
 
-            // verset trouvé dans ce livre
+            // On est dans le bon livre
+            $startIndex = $days * $perDay;
+            $currentIndex = 0;
+
+            $versesText = [];
+            $chapterResult = null;
+            $startVerse = null;
+            $endVerse = null;
+
             foreach ($data as $chapterNumber => $chapter) {
                 foreach ($chapter as $verseNumber => $text) {
 
-                    if ($days === 0) {
-                        return [
-                            'book' => str_replace('.json', '', $book),
-                            'chapter' => $chapterNumber,
-                            'verse' => $verseNumber,
-                            'text' => $text,
-                        ];
+                    if ($currentIndex >= $startIndex && count($versesText) < $perDay) {
+
+                        if ($chapterResult === null) {
+                            $chapterResult = $chapterNumber;
+                            $startVerse = $verseNumber;
+                        }
+
+                        $versesText[] = "{$verseNumber} {$text}";
+                        $endVerse = $verseNumber;
                     }
 
-                    $days--;
+                    $currentIndex++;
+
+                    if (count($versesText) >= $perDay) {
+                        break 2;
+                    }
                 }
             }
+
+            return [
+                'book'       => str_replace('.json', '', $bookFile),
+                'chapter'    => $chapterResult,
+                'startVerse' => $startVerse,
+                'endVerse'   => $endVerse,
+                'text'       => implode(' ', $versesText),
+            ];
         }
 
         return [
-            'book' => null,
-            'chapter' => null,
-            'verse' => null,
-            'text' => 'Tonga any amin’ny faran’ny Baiboly 😊',
+            'book'       => null,
+            'chapter'    => null,
+            'startVerse' => null,
+            'endVerse'   => null,
+            'text'       => 'Tonga any amin’ny faran’ny Baiboly 😊',
         ];
     }
 }
