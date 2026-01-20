@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
     description: 'Envoie le verset du jour aux utilisateurs abonnés',
 )]
 class SendDailyVerseCommand extends Command
-{
+{ 
     public function __construct(
         private EmailsRepository $emails,
         private MailDocumentService $mailDocumentService,
