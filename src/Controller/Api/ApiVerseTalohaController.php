@@ -10,16 +10,37 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class ApiVerseTalohaController extends AbstractController
 {
-    #[Route('/api/versets/testameta_taloha', name: 'api_versets_taloha', methods: ['GET'])]
+    #[Route('/api/versets/testameta_taloha', name: 'api_versets_taloha', methods: ['POST'])]
     public function getVersets(Request $request, CustomBibleVerseTestametaTalohaService $bibleService): JsonResponse
     {
-        $book = $request->query->get('book');    
-        $chapter = $request->query->get('chapter'); 
-        $start = $request->query->get('start');  
-        $end = $request->query->get('end');     
+        $data = json_decode($request->getContent(), true);
+        $book = $data['book'] ?? null;   
+        $chapter = $data['chapter'] ?? null;
+        $start = $data['start'] ?? null;
+        $end = $data['end'] ?? null;   
 
-        if (!$book || !$chapter || !$start) {
-            return $this->json(['error' => 'Paramètres manquants'], 400);
+        if (!$book) {
+            return $this->json([
+                'statut' => 400,
+                "message" => 'Livre manquant',
+                'data' => null
+                ], 400);
+        }
+
+        if (!$chapter) {
+            return $this->json([
+                'statut' => 400,
+                "message" => 'Chapitre manquant',
+                'data' => null
+                ], 400);
+        }
+
+        if (!array_key_exists('start', $data)) {
+            return $this->json([
+                'statut' => 400,
+                "message" => 'Le paramètre "start" est manquant dans le JSON',
+                'data' => null
+            ], 400);
         }
 
         $result = $bibleService->getVersesTestametaTaloha(
@@ -29,6 +50,18 @@ class ApiVerseTalohaController extends AbstractController
             $end ? (int)$end : null
         );
 
-        return $this->json($result);
+        if (isset($result['error'])) {
+            return $this->json([
+                'statut' => 404,
+                'message' => $result['error'],
+                'data' => null
+            ], 404);
+        }
+
+        return $this->json([
+            'statut' => 200,
+            "message" => 'Données récupérées avec succès',
+            'data' => $result
+        ]);
     }
 }
